@@ -13,4 +13,6 @@ cp -R dist/geotrack-backend extension/bin/geotrack-backend
 # test de fumée : le moteur démarre et répond
 printf '{"id":1,"cmd":"ping"}\n{"id":2,"cmd":"quit"}\n' | extension/bin/geotrack-backend/geotrack-backend serve | tee /tmp/geotrack_smoke.txt
 grep -q '"pong": true' /tmp/geotrack_smoke.txt
+# architecture réelle du binaire (arm64 ou x86_64)
+file extension/bin/geotrack-backend/geotrack-backend
 echo "Moteur compilé : extension/bin/geotrack-backend"

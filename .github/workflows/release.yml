@@ -1,6 +1,6 @@
-# Compile l'installeur macOS sur un Mac (Apple Silicon) de GitHub et le publie dans les Releases.
+# Compile les installeurs macOS (Apple Silicon ET Intel) sur un Mac de GitHub et les publie dans les Releases.
+# La version Intel est compilée avec un Python x86_64 qui tourne sous Rosetta : le moteur obtenu est 100 % Intel.
 # Se lance quand on pousse un tag de version (ex. v0.1.0), ou à la main depuis l'onglet Actions.
-# Les minutes macOS coûtent plus cher que les minutes Linux : on ne compile qu'à ce moment-là.
 name: Release macOS
 on:
   push:
@@ -17,34 +17,70 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            label: apple-silicon
+          - arch: x64
+            label: intel
     runs-on: macos-14
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+      - name: Rosetta (pour la version Intel)
+        if: matrix.arch == 'x64'
+        run: softwareupdate --install-rosetta --agree-to-license || true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          architecture: ${{ matrix.arch }}
       - name: Version
         id: v
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then V="${GITHUB_REF_NAME#v}"; else V="${{ inputs.version }}"; fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
+          python -c "import platform; print('Python', platform.machine())"
       - name: Compiler le moteur (PyInstaller)
         run: bash scripts/build_backend.sh
+      - name: Vérifier l'architecture du moteur
+        run: |
+          f=extension/bin/geotrack-backend/geotrack-backend
+          if [ "${{ matrix.arch }}" = "x64" ]; then file "$f" | grep -q x86_64; else file "$f" | grep -q arm64; fi
       - name: Tester le moteur compilé sur la vidéo de synthèse
         env:
           GEOTRACK_BACKEND: ${{ github.workspace }}/extension/bin/geotrack-backend/geotrack-backend
         run: python tests/synthetic_test.py
       - name: Fabriquer l'installeur .pkg
-        run: bash scripts/build_pkg.sh "${{ steps.v.outputs.version }}"
+        run: bash scripts/build_pkg.sh "${{ steps.v.outputs.version }}" "${{ matrix.label }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installeur-${{ matrix.label }}
+          path: dist/*
+          retention-days: 3
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publier la release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          V="${{ steps.v.outputs.version }}"
+          if [ "${{ github.event_name }}" = "push" ]; then V="${GITHUB_REF_NAME#v}"; else V="${{ inputs.version }}"; fi
+          ls -la dist
+          NOTES="Deux installeurs : *-apple-silicon.pkg pour les Mac M1 à M4, *-intel.pkg pour les Mac Intel. Double-clic sur le .pkg, puis redémarre After Effects : Fenêtre > Extensions > Gragarda GeoTrack. Voir le README pour la première ouverture d'un installeur non signé."
           if gh release view "v$V" >/dev/null 2>&1; then
-            gh release upload "v$V" dist/*.pkg dist/*.zip --clobber
-            exit 0
+            # on remplace les anciens fichiers (ex. le .pkg sans suffixe de la 0.1.0)
+            for a in $(gh release view "v$V" --json assets --jq '.assets[].name'); do gh release delete-asset "v$V" "$a" --yes; done
+            gh release upload "v$V" dist/* --clobber
+            gh release edit "v$V" --notes "$NOTES"
+          else
+            gh release create "v$V" dist/* --title "Gragarda GeoTrack $V" --notes "$NOTES"
           fi
-          gh release create "v$V" dist/*.pkg dist/*.zip --title "Gragarda GeoTrack $V" \
-            --notes "Installeur macOS (Apple Silicon). Double-clic sur le .pkg, puis redémarre After Effects : Fenêtre > Extensions > Gragarda GeoTrack. Voir le README pour la première ouverture d'un installeur non signé."

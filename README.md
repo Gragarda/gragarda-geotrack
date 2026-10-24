@@ -13,13 +13,13 @@ Tout ce que tu parentes à ce null (texte 3D, modèle 3D, particules, calque d'e
 
 ## Installation
 
-1. Ouvre l'onglet **Releases** du repo et télécharge `Gragarda-GeoTrack-x.y.z.pkg`.
+1. Ouvre l'onglet **Releases** du repo et télécharge le `.pkg` qui correspond à ton Mac (voir pré-requis).
 2. Double-clique sur le `.pkg`. L'installeur n'est pas signé chez Apple, donc la première fois macOS affiche « impossible de vérifier le développeur ». Ferme ce message, puis va dans **Réglages Système → Confidentialité et sécurité**. En bas de la page, une ligne mentionne le `.pkg` bloqué : clique sur **Ouvrir quand même**.
 3. Redémarre After Effects, puis **Fenêtre → Extensions → Gragarda GeoTrack**.
 
 L'installeur copie le panneau dans `/Library/Application Support/Adobe/CEP/extensions/com.gragarda.geotrack`. Il active aussi le réglage d'AE qui autorise les extensions non signées par Adobe (`PlayerDebugMode`).
 
-**Pré-requis :** After Effects 2022 ou plus récent, Mac Apple Silicon (M1 à M4). Python n'est pas nécessaire, le moteur est compilé dans l'installeur. Pour un Mac Intel, voir *Installation développeur* plus bas.
+**Pré-requis :** After Effects 2022 ou plus récent. Prends `…-apple-silicon.pkg` pour un Mac M1 à M4, `…-intel.pkg` pour un Mac Intel (menu  → À propos de ce Mac : « Puce Apple » ou « Processeur Intel »). Python n'est pas nécessaire, le moteur est compilé dans l'installeur.
 
 **Désinstaller :** `sudo bash scripts/uninstall.sh`
 
@@ -112,11 +112,11 @@ Les keyframes, les pins et le tracking sont sauvegardés automatiquement dans un
 - La **caméra est supposée fixe** : on calcule le mouvement de l'objet par rapport à la caméra. Si c'est la caméra qui bouge autour d'un objet immobile, le résultat est le même à l'écran, mais c'est le null qui bouge, pas la caméra.
 - Une main qui passe devant l'objet, ou un gros flou de bouger, peut faire décrocher le tracking. Ajoute une keyframe juste après.
 - Le moteur garde les images de la plage en mémoire, en niveaux de gris. Pour les plans très longs, la résolution de travail baisse automatiquement. Tu peux aussi tracker par morceaux (plages « vers la fin » / « vers le début »).
-- L'installeur compilé est pour **Apple Silicon**.
+- Installeurs compilés pour Apple Silicon et pour Intel.
 
 ---
 
-## Installation développeur (et Mac Intel)
+## Installation développeur
 Depuis un clone du repo, avec Python 3 installé (par exemple avec Homebrew) :
 ```bash
 bash scripts/install_dev.sh
