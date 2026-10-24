@@ -74,13 +74,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then V="${GITHUB_REF_NAME#v}"; else V="${{ inputs.version }}"; fi
-          ls -la dist
           NOTES="Deux installeurs : *-apple-silicon.pkg pour les Mac M1 à M4, *-intel.pkg pour les Mac Intel. Double-clic sur le .pkg, puis redémarre After Effects : Fenêtre > Extensions > Gragarda GeoTrack. Voir le README pour la première ouverture d'un installeur non signé."
-          if gh release view "v$V" >/dev/null 2>&1; then
-            # on remplace les anciens fichiers (ex. le .pkg sans suffixe de la 0.1.0)
-            for a in $(gh release view "v$V" --json assets --jq '.assets[].name'); do gh release delete-asset "v$V" "$a" --yes; done
-            gh release upload "v$V" dist/* --clobber
-            gh release edit "v$V" --notes "$NOTES"
-          else
-            gh release create "v$V" dist/* --title "Gragarda GeoTrack $V" --notes "$NOTES"
-          fi
+          set -x
+          find dist -type f -exec ls -la {} \;
+          # release recréée d'un bloc (le tag est conservé)
+          gh release delete "v$V" --yes 2>/dev/null || true
+          gh release create "v$V" $(find dist -type f \( -name '*.pkg' -o -name '*.zip' \)) \
+            --title "Gragarda GeoTrack $V" --notes "$NOTES" --target "${{ github.sha }}"
