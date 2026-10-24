@@ -1,0 +1,73 @@
+:root {
+  --bg: #232323;
+  --bg2: #2c2c2c;
+  --bg3: #383838;
+  --line: #474747;
+  --text: #d6d6d6;
+  --muted: #8c8c8c;
+  --accent: #3ddc84;
+  --cyan: #38c8f0;
+  --orange: #ff9d2e;
+  --red: #ff5a52;
+  --pin: #ffd23f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+button, select, input { font: inherit; color: var(--text); background: var(--bg3); border: 1px solid var(--line);
+  border-radius: 4px; padding: 4px 9px; }
+button { cursor: pointer; }
+button:hover:not(:disabled) { background: #454545; }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: #2f6fd6; border-color: #3b7ce6; color: #fff; }
+button.primary:hover:not(:disabled) { background: #3b7ce6; }
+button.accent { background: #1f8a4c; border-color: #27a35b; color: #fff; }
+button.accent:hover:not(:disabled) { background: #27a35b; }
+button.small { padding: 2px 7px; }
+button.active { outline: 2px solid var(--accent); }
+input[type=number] { width: 64px; padding: 3px 5px; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 11px; }
+.unit { margin-left: 2px; color: var(--muted); }
+.spacer { flex: 1; }
+.label { max-width: 220px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+label.check { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+
+#toolbar, #actions { display: flex; align-items: center; gap: 14px; padding: 6px 10px; background: var(--bg2);
+  border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+#actions { border-top: 1px solid var(--line); border-bottom: none; gap: 8px; }
+.group { display: flex; align-items: center; gap: 6px; }
+
+#stage { position: relative; flex: 1; min-height: 160px; background: #151515; }
+#view { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+#view.grab { cursor: grabbing; }
+.overlay-msg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: rgba(35,35,35,.92);
+  border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; max-width: 460px; pointer-events: none; }
+.overlay-msg p { margin: 6px 0; }
+#hud { position: absolute; left: 8px; top: 8px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,.55);
+  pointer-events: none; font-variant-numeric: tabular-nums; white-space: pre; }
+
+#timelineWrap { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--bg2); border-top: 1px solid var(--line); }
+.tl-controls { display: flex; align-items: center; gap: 4px; }
+#timeline { flex: 1; height: 34px; cursor: pointer; }
+
+#statusbar { display: flex; align-items: center; gap: 10px; padding: 3px 10px; background: #1b1b1b; min-height: 22px; }
+#status { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#status.error { color: var(--red); }
+#status.warn { color: var(--orange); }
+#progress { width: 160px; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; visibility: hidden; }
+#progress.on { visibility: visible; }
+#progressFill { height: 100%; width: 0; background: var(--cyan); transition: width .15s; }
+
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.modal-body { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; max-width: 640px;
+  max-height: 90vh; overflow: auto; }
+.modal h2 { font-size: 13px; margin: 12px 0 6px; color: #fff; }
+.modal h2:first-child { margin-top: 0; }
+.modal table { border-collapse: collapse; width: 100%; }
+.modal td { padding: 4px 8px 4px 0; vertical-align: top; border-bottom: 1px solid #333; }
+.modal td:first-child { white-space: nowrap; color: #fff; }
+.sw { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 4px; }
+.sw.key { background: var(--accent); } .sw.track { background: var(--cyan); } .sw.est { background: var(--orange); }

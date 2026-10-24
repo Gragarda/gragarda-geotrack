@@ -1,0 +1,15 @@
+#!/bin/bash
+# Exécuté par l'installeur après la copie des fichiers.
+EXT="/Library/Application Support/Adobe/CEP/extensions/com.gragarda.geotrack"
+chmod -R a+rX "$EXT"
+chmod +x "$EXT/bin/geotrack-backend/geotrack-backend" 2>/dev/null || true
+xattr -dr com.apple.quarantine "$EXT" 2>/dev/null || true
+# Le plugin n'est pas signé par Adobe : on autorise les extensions non signées (mode "PlayerDebugMode")
+# pour l'utilisateur connecté, sur toutes les versions de CEP utilisées par AE 2022 -> 2026.
+USER_NAME="$(stat -f%Su /dev/console)"
+if [ -n "$USER_NAME" ] && [ "$USER_NAME" != "root" ]; then
+  for v in 9 10 11 12 13; do
+    sudo -u "$USER_NAME" defaults write "com.adobe.CSXS.$v" PlayerDebugMode 1 || true
+  done
+fi
+exit 0

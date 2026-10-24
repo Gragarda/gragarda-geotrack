@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Gragarda GeoTrack</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="toolbar">
+    <div class="group">
+      <button id="btnFootage" title="Sélectionne le calque vidéo dans la timeline d'AE, puis clique ici">🎞 Calque vidéo</button>
+      <span id="footageLabel" class="label muted">aucun</span>
+    </div>
+    <div class="group">
+      <button id="btnMesh" title="Modèle 3D de l'objet, au format .obj">◆ Mesh .obj</button>
+      <span id="meshLabel" class="label muted">aucun</span>
+    </div>
+    <div class="group">
+      <label for="focal" title="Focale équivalente plein format (24x36). Téléphone principal ≈ 24-26 mm">Focale</label>
+      <input id="focal" type="number" min="5" max="600" step="0.5" value="26"><span class="unit">mm</span>
+      <span id="zoomLabel" class="muted small"></span>
+      <button id="btnUseCam" class="small hidden" title="Reprendre le Zoom de la caméra déjà présente dans la comp">caméra de la comp</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="group">
+      <label class="check" title="Quand tu changes de frame ici, AE suit"><input id="syncAE" type="checkbox" checked> suivre dans AE</label>
+      <button id="btnHelp" class="small" title="Raccourcis et mode d'emploi">?</button>
+    </div>
+  </header>
+
+  <main id="stage">
+    <canvas id="view"></canvas>
+    <div id="empty" class="overlay-msg">
+      <p><b>1.</b> Dans la timeline d'AE, sélectionne le calque vidéo, puis clique sur <b>🎞 Calque vidéo</b>.</p>
+      <p><b>2.</b> Charge le modèle 3D de l'objet avec <b>◆ Mesh .obj</b>.</p>
+      <p><b>3.</b> Clique sur le mesh pour poser des pins et glisse-les sur l'objet dans l'image.</p>
+    </div>
+    <div id="hud"></div>
+  </main>
+
+  <section id="timelineWrap">
+    <div class="tl-controls">
+      <button id="btnPrev" class="small" title="Frame précédente (←)">◀</button>
+      <input id="frameInput" type="number" min="0" value="0">
+      <button id="btnNext" class="small" title="Frame suivante (→)">▶</button>
+      <button id="btnPrevKey" class="small" title="Keyframe précédente (Maj+←)">◆◀</button>
+      <button id="btnNextKey" class="small" title="Keyframe suivante (Maj+→)">▶◆</button>
+    </div>
+    <canvas id="timeline"></canvas>
+  </section>
+
+  <footer id="actions">
+    <button id="btnKey" title="Fige la pose actuelle comme keyframe (K)">◆ Keyframe</button>
+    <button id="btnDelKey" title="Supprime la keyframe de cette frame (Suppr)">✕ Keyframe</button>
+    <button id="btnClearPins" title="Retire les pins de cette frame (P)">Retirer les pins</button>
+    <div class="spacer"></div>
+    <select id="trackRange" title="Quelle partie du calque tracker">
+      <option value="all">Tout le calque</option>
+      <option value="keys">Entre 1re et dernière keyframe</option>
+      <option value="fwd">De la frame courante vers la fin</option>
+      <option value="bwd">De la frame courante vers le début</option>
+    </select>
+    <button id="btnTrack" class="primary" title="Lance le tracking (T)">▶ Tracker</button>
+    <button id="btnClearTrack" title="Efface le résultat du tracking (garde les keyframes)">Effacer le tracking</button>
+    <button id="btnApply" class="accent" title="Crée la caméra et le null animé dans la comp">→ Envoyer vers AE</button>
+  </footer>
+
+  <div id="statusbar">
+    <span id="status">Prêt.</span>
+    <div id="progress"><div id="progressFill"></div></div>
+    <span id="backendInfo" class="muted small"></span>
+  </div>
+
+  <div id="help" class="modal hidden">
+    <div class="modal-body">
+      <h2>Aligner le mesh</h2>
+      <table>
+        <tr><td>Clic sur le mesh</td><td>pose un pin (point jaune) et le fait glisser</td></tr>
+        <tr><td>Glisser un pin</td><td>tire le mesh : 1 pin le fait glisser, 2 pins le tournent dans le plan et changent sa taille, 3 pins et plus le tournent en 3D</td></tr>
+        <tr><td>Double-clic sur un pin</td><td>supprime le pin</td></tr>
+        <tr><td>Glisser dans le vide / Alt+glisser</td><td>fait tourner le mesh sur lui-même</td></tr>
+        <tr><td>Maj+glisser</td><td>déplace le mesh sans le tourner</td></tr>
+        <tr><td>Molette</td><td>rapproche / éloigne le mesh</td></tr>
+        <tr><td>Cmd+molette · Espace+glisser · F</td><td>zoom de la vue · déplacer la vue · recadrer</td></tr>
+        <tr><td>← → · Maj+← →</td><td>frame précédente / suivante · keyframe précédente / suivante</td></tr>
+        <tr><td>K · Suppr · P · R · T</td><td>keyframe · supprimer keyframe · retirer pins · réinitialiser la pose · tracker</td></tr>
+      </table>
+      <h2>Lire l'écran</h2>
+      <table>
+        <tr><td><span class="sw key"></span> fil de fer vert</td><td>keyframe (pose que tu as alignée)</td></tr>
+        <tr><td><span class="sw track"></span> fil de fer cyan</td><td>pose trouvée par le tracking</td></tr>
+        <tr><td><span class="sw est"></span> fil de fer orange pointillé</td><td>aucune pose ici : on affiche la plus proche</td></tr>
+        <tr><td>Bande sous la timeline</td><td>vert = tracking fiable, orange = moyen, rouge = douteux, gris = rien</td></tr>
+      </table>
+      <p class="muted">Astuce : pose 4 à 6 pins sur des coins bien visibles et éloignés les uns des autres, sur une frame où l'objet est net. Ajoute une keyframe là où le tracking devient orange ou rouge, puis relance.</p>
+      <button id="btnCloseHelp">Fermer</button>
+    </div>
+  </div>
+
+  <script src="js/pose.js"></script>
+  <script src="js/backend.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+build/
+dist/
+extension/bin/
+*.pkg
+*.zip
+.DS_Store
+test-shots/
+extension/backend
