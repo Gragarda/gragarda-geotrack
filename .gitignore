@@ -9,3 +9,4 @@ extension/bin/
 .DS_Store
 test-shots/
 extension/backend
+.venv-build-*/

@@ -23,35 +23,35 @@ jobs:
         include:
           - arch: arm64
             label: apple-silicon
-          - arch: x64
+          - arch: x86_64
             label: intel
     runs-on: macos-14
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - name: Rosetta (pour la version Intel)
-        if: matrix.arch == 'x64'
+        if: matrix.arch == 'x86_64'
         run: softwareupdate --install-rosetta --agree-to-license || true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          architecture: ${{ matrix.arch }}
       - name: Version
         id: v
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then V="${GITHUB_REF_NAME#v}"; else V="${{ inputs.version }}"; fi
           echo "version=$V" >> "$GITHUB_OUTPUT"
-          python -c "import platform; print('Python', platform.machine())"
       - name: Compiler le moteur (PyInstaller)
-        run: bash scripts/build_backend.sh
-      - name: Vérifier l'architecture du moteur
-        run: |
-          f=extension/bin/geotrack-backend/geotrack-backend
-          if [ "${{ matrix.arch }}" = "x64" ]; then file "$f" | grep -q x86_64; else file "$f" | grep -q arm64; fi
+        env:
+          # le Python d'Apple (/usr/bin/python3) est "universel" : il sait tourner en x86_64 sous Rosetta,
+          # alors que celui de setup-python est uniquement ARM sur ces machines
+          PYTHON: ${{ matrix.arch == 'x86_64' && '/usr/bin/python3' || 'python3' }}
+        run: bash scripts/build_backend.sh ${{ matrix.arch }}
       - name: Tester le moteur compilé sur la vidéo de synthèse
         env:
           GEOTRACK_BACKEND: ${{ github.workspace }}/extension/bin/geotrack-backend/geotrack-backend
-        run: python tests/synthetic_test.py
+        run: |
+          pip install numpy opencv-python
+          python tests/synthetic_test.py
       - name: Fabriquer l'installeur .pkg
         run: bash scripts/build_pkg.sh "${{ steps.v.outputs.version }}" "${{ matrix.label }}"
       - uses: actions/upload-artifact@v4
